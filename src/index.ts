@@ -10,6 +10,8 @@ const tgToken: string = process.env.TG_BOT_TOKEN as string
  
 const webAppUrl = "https://www.google.com/";
 
+import userRoutes from "./routes/users";
+
 mongoose
   .connect(process.env.DB_HOST as string)
   .then(() => console.log("Connected to database!"));
@@ -24,6 +26,8 @@ app.use(cors());
 
 const bot = new TelegramBot(tgToken, {polling: true});
 
+
+app.use("/api/users", userRoutes);
 
 
 bot.on("message", async (msg) => {
