@@ -1,66 +1,65 @@
-import express, { Request, Response } from "express";
+
 import cors from "cors";
 import "dotenv/config";
+import express, { Request, Response } from "express"
 
 import TelegramBot from "node-telegram-bot-api";
+import { WebDataRequest } from "./common/types/product";
 
-import mongoose from "mongoose";
 
-const tgToken: string = process.env.TG_BOT_TOKEN as string
- 
-const webAppUrl = "https://tg-super-app.netlify.app/";
+const token : string = process.env.TG_BOT_TOKEN as string
 
-import userRoutes from "./routes/users";
+const webAppUrl = "https://bd0c-188-163-81-109.ngrok-free.app";
 
-mongoose
-  .connect(process.env.DB_HOST as string)
-  .then(() => console.log("Connected to database!"));
-
- 
-
+const bot = new TelegramBot(token, { polling: true });
 const app = express();
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+/* app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+); */
 app.use(cors());
 
 
 
-const bot = new TelegramBot(tgToken, {polling: true});
-
-
-app.use("/api/users", userRoutes);
-
-app.post('/api/users/register-telegram', (req: Request, res: Response) => {
-    console.log('Полученные данные:', req.body);
-    res.json({ message: 'Запрос успешно обработан', data: req.body });
-});
-
-
-bot.on("message", async (msg) => {
+bot.on("message", async (msg: TelegramBot.Message) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
 
   //* Кнопка которая в самом низу телеграм бота
   if (text === '/start') {
+    await bot.sendMessage(chatId, 'Ниже появится кнопка, заполни форму!!!', {
+      reply_markup: {
+        keyboard: [
+          [{ text: 'Заполнить форму!!', web_app: { url: webAppUrl + '/form' } }]
+        ]
+      }
+    })
 
     //* Кнопка которая появляется ниже приходящего сообщением 'Заходи в наш интернет магазин по кнопке ниже'
     await bot.sendMessage(chatId, 'Заходи в наш интернет магазин по кнопке ниже', {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Посетить магазин', web_app: { url: webAppUrl } }]
+          [{ text: 'Сделать заказ', web_app: { url: webAppUrl } }]
         ]
       }
     })
   }
 
-  //* Обработка кнопки "Войти через Телеграм"
-    if (msg?.web_app_data?.data) {
+
+  //* принятие данных с фронтенда
+  if (msg?.web_app_data?.data) {
     try {
       const data = JSON.parse(msg?.web_app_data?.data)
       console.log(data)
       await bot.sendMessage(chatId, 'Спасибо за обратную связь!')
-     /*  await bot.sendMessage(chatId, 'Ваша страна: ' + data?.country);
-      await bot.sendMessage(chatId, 'Ваша улица: ' + data?.street); */
+      await bot.sendMessage(chatId, 'Ваша страна: ' + data?.country);
+      await bot.sendMessage(chatId, 'Ваша улица: ' + data?.street);
 
       setTimeout(async () => {
         await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
@@ -72,16 +71,27 @@ bot.on("message", async (msg) => {
 });
 
 
+//* app.use("/api/users", userRoutes);
+app.post('/web-data', async (req, res) => {
+  console.log(req.body);
+ const { queryId, products = [], totalPrice }: WebDataRequest = req.body;
+  try {
+    await bot.answerWebAppQuery(queryId, {
+      type: 'article',
+      id: queryId,
+      title: 'Успешная покупка',
+      input_message_content: {
+        message_text: ` Поздравляю с покупкой, вы приобрели товар на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
+      }
+    })
+    return res.status(200).json({});
+  } catch (e) {
+    return res.status(500).json({})
+  }
+})
 
+const PORT = 8000;
 
-
-
-
-
-app.get("/test", async (req: Request, res: Response) => {
-res. json({ message: "Hello!" });
-});
-
-app.listen (7001, () => {
-console. log("server started on localhost:7001");
-}) ;
+app.listen(PORT, () => {
+  console.log("server running on localhost: " + PORT);
+})
