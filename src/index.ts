@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 const tgToken: string = process.env.TG_BOT_TOKEN as string
  
-const webAppUrl = "https://www.google.com/";
+const webAppUrl = "https://tg-super-app.netlify.app/";
 
 import userRoutes from "./routes/users";
 
@@ -29,6 +29,11 @@ const bot = new TelegramBot(tgToken, {polling: true});
 
 app.use("/api/users", userRoutes);
 
+app.post('/api/users/register-telegram', (req: Request, res: Response) => {
+    console.log('Полученные данные:', req.body);
+    res.json({ message: 'Запрос успешно обработан', data: req.body });
+});
+
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -48,7 +53,25 @@ bot.on("message", async (msg) => {
     })
   }
 
+  //* Обработка кнопки "Войти через Телеграм"
+    if (msg?.web_app_data?.data) {
+    try {
+      const data = JSON.parse(msg?.web_app_data?.data)
+      console.log(data)
+      await bot.sendMessage(chatId, 'Спасибо за обратную связь!')
+     /*  await bot.sendMessage(chatId, 'Ваша страна: ' + data?.country);
+      await bot.sendMessage(chatId, 'Ваша улица: ' + data?.street); */
+
+      setTimeout(async () => {
+        await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
+      }, 3000)
+    } catch (e) {
+      console.log(e);
+    }
+  }
 });
+
+
 
 
 
