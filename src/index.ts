@@ -9,7 +9,7 @@ import { WebDataRequest } from "./common/types/product";
 
 const token : string = process.env.TG_BOT_TOKEN as string
 
-const webAppUrl = "https://9bf5-188-163-81-109.ngrok-free.app";
+const webAppUrl = "https://tg-super-app.netlify.app";
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
