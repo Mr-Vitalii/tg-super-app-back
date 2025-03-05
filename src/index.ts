@@ -9,7 +9,7 @@ import { WebDataRequest } from "./common/types/product";
 
 const token : string = process.env.TG_BOT_TOKEN as string
 
-const webAppUrl = "https://tg-super-app.netlify.app";
+const webAppUrl = "https://tg-super-app.netlify.app/"; //* Изменять перед оправкой в прод
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
@@ -90,7 +90,23 @@ app.post('/web-data', async (req, res) => {
   }
 })
 
-const PORT = 8000;
+
+app.get("/", (req, res) => {
+  res.send("<h1>Hello, server ok</h1>");
+});
+
+app.post('/api/data', (req, res) => {
+  const receivedData = req.body;
+  
+  res.json(receivedData);
+});
+
+
+import authRoutes from "./routes/auth";
+
+app.use("/api/auth", authRoutes);
+
+const PORT = 8001;
 
 app.listen(PORT, () => {
   console.log("server running on localhost: " + PORT);
